@@ -1,0 +1,1128 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Oct 17 18:17:46 2022
+
+@author: fiore
+"""
+
+
+
+
+import os
+import numpy as np
+import math
+from scipy import interpolate
+from matplotlib import rc
+import matplotlib
+
+rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+## for Palatino and other serif fonts use:
+#rc('font',**{'family':'serif','serif':['Palatino']})
+rc('text', usetex=True)
+
+matplotlib.rcParams.update({'font.size': 16})#22
+
+
+path1='/data/nobackup/fiore/Rode_bundle/new_test_k_epsilon/postProcessing/cuttingPlane/60600'
+path2='/data/nobackup/fiore/Rode_bundle/new_test_k_omega_layers/postProcessing/cuttingPlane/234200'
+path3='/data/nobackup/fiore/Rode_bundle/new_test_EBM/postProcessing/cuttingPlane/69700'
+path4='/data/nobackup/fiore/Rode_bundle/new_test_EBM2/postProcessing/cuttingPlane/70100'
+path5='/data/nobackup/fiore/Rode_bundle/k_epsilon_layers_2/postProcessing/cuttingPlane/17200'
+path6='/data/nobackup/fiore/Rode_bundle/EBM_Manservisi/postProcessing/cuttingPlane/81050'
+path7='/data/nobackup/fiore/Rode_bundle/EBM_ML/postProcessing/cuttingPlane/90900'
+path8='/data/nobackup/fiore/Rode_bundle/EBM_AHFM_EB/postProcessing/cuttingPlane/84050'
+path9='/data/nobackup/fiore/Rode_bundle/EBM_DTHFM/postProcessing/cuttingPlane/84200'
+path10='/data/nobackup/fiore/Rode_bundle/EBM_ML2/postProcessing/cuttingPlane/92000'
+
+path_list =[path6,path8, path9, path7, path10]
+thermal_treatment = ['Manservisi', 'Manservisi', 'Manservisi', 'Manservisi','Manservisi']
+
+case_names = ['Manservisi', 'AHFM','DTHFM', 'ANN (MM)','ANN (Shams)' ]
+
+
+from load_rode_bundle import Bundle_DNS
+import matplotlib.pyplot as plt
+import matplotlib.tri as tri
+
+from collections import OrderedDict
+
+linestyles = OrderedDict(\
+[('solid',               (0, ())),\
+ ('loosely dotted',      (0, (1, 10))),\
+ ('dotted',              (0, (1, 5))),\
+ ('densely dotted',      (0, (1, 1))),\
+
+ ('loosely dashed',      (0, (5, 10))),\
+ ('dashed',              (0, (5, 5))),\
+ ('densely dashed',      (0, (5, 1))),\
+
+ ('loosely dashdotted',  (0, (3, 10, 1, 10))),\
+ ('dashdotted',          (0, (3, 5, 1, 5))),\
+ ('densely dashdotted',  (0, (3, 1, 1, 1))),\
+
+ ('loosely dashdotdotted', (0, (3, 10, 1, 10, 1, 10))),\
+ ('dashdotdotted',         (0, (3, 5, 1, 5, 1, 5))),\
+ ('densely dashdotdotted', (0, (3, 1, 1, 1, 1, 1)))])
+    
+    
+colors = ['k','b','g','m','y','cyan','purple','orange']  
+
+linestyle_vec = [linestyles['densely dashdotdotted'],linestyles['densely dotted'],linestyles['dashed'],linestyles['densely dashdotdotted'],linestyles['densely dashed'],linestyles['dotted'],linestyles['dotted']]  
+
+
+left  = 0.05  # the left side of the subplots of the figure
+right = 0.95    # the right side of the subplots of the figure
+bottom = 0.1   # the bottom of the subplots of the figure
+top = 0.9      # the top of the subplots of the figure
+wspace = 0.4   # the amount of width reserved for blank space between subplots
+hspace = 0.2   # the amount of height reserved for white space between subplots    
+
+
+n_plots = 6
+
+bool_contour = False
+bool_plots = True
+
+xl = 7
+yl = 7
+
+if bool_contour:
+
+    fig1, axs1 = plt.subplots(1, n_plots, figsize=(5,6))
+    img = axs1[0].contourf(Bundle_DNS.x[:,0],Bundle_DNS.y[0,:], np.transpose(Bundle_DNS.W), cmap="RdBu_r")
+    #plt.title(r'$v\theta$ Prediction (DNS data)')
+    plt.colorbar(img, ax=axs1[0])
+    axs1[0].set_title(r'$U$ DNS')
+    axs1[0].set_aspect('equal')
+    plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+    manager1 = plt.get_current_fig_manager()    
+    ##axs1[0,0].set_ylabel(r'$y$', fontsize=18)
+    #axs1[0,0].set_xlabel(r'$x$', fontsize=18)
+        
+    
+    fig2, axs2 = plt.subplots(1, n_plots, figsize=(5,6))
+    img= axs2[0].contourf(Bundle_DNS.x[:,0],Bundle_DNS.y[0,:], np.transpose(Bundle_DNS.k),  cmap="RdBu_r")
+    #plt.title(r'$v\theta$ Prediction (DNS data)')
+    plt.colorbar(img, ax=axs2[0])
+    axs2[0].set_title(r'$k$ DNS')
+    axs2[0].set_aspect('equal')
+    plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+    manager2 = plt.get_current_fig_manager()      
+    
+    # axs2[0,0].set_ylabel(r'$y$', fontsize=18)
+    # axs2[0,0].set_xlabel(r'$x$', fontsize=18)
+    
+    
+    fig3, axs3 = plt.subplots(1, n_plots, figsize=(5,6))
+    img= axs3[0].contourf(Bundle_DNS.x[:,0],Bundle_DNS.y[0,:], np.transpose(Bundle_DNS.epsilon/550), cmap="RdBu_r")
+    #plt.title(r'$v\theta$ Prediction (DNS data)')
+    plt.colorbar(img, ax=axs3[0])
+    axs3[0].set_title(r'$\epsilon$ DNS')
+    axs3[0].set_aspect('equal')
+    plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+    manager3 = plt.get_current_fig_manager()      
+    # axs3[0,0].set_ylabel(r'$y$', fontsize=18)
+    # axs3[0,0].set_xlabel(r'$x$', fontsize=18)
+    
+    
+    fig4, axs4 = plt.subplots(1, n_plots, figsize=(5,6))
+    img = axs4[0].contourf(Bundle_DNS.x[:,0],Bundle_DNS.y[0,:], np.transpose(Bundle_DNS.T), cmap="RdBu_r")
+    #plt.title(r'$v\theta$ Prediction (DNS data)')
+    plt.colorbar(img, ax=axs4[0])
+    axs4[0].set_title(r'$T$ DNS')
+    axs4[0].set_aspect('equal')
+    plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+    manager4 = plt.get_current_fig_manager()      
+    # axs4[0,0].set_ylabel(r'$y$', fontsize=18)
+    # axs4[0,0].set_xlabel(r'$x$', fontsize=18)
+    
+    
+    fig5, axs5 = plt.subplots(1, n_plots, figsize=(5,6))
+    img = axs5[0].contourf(Bundle_DNS.x[:,0],Bundle_DNS.y[0,:], np.transpose(Bundle_DNS.rs_xx),  cmap="RdBu_r")
+    #plt.title(r'$v\theta$ Prediction (DNS data)')
+    plt.colorbar(img, ax=axs5[0])
+    axs5[0].set_title(r'$\overline{uu}$ DNS')
+    axs5[0].set_aspect('equal')
+    plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+    manager5 = plt.get_current_fig_manager()      
+    # axs5[0,0].set_ylabel(r'$y$', fontsize=18)
+    # axs5[0,0].set_xlabel(r'$x$', fontsize=18)
+    
+    
+    fig6, axs6 = plt.subplots(1, n_plots, figsize=(5,6))
+    img = axs6[0].contourf(Bundle_DNS.x[:,0],Bundle_DNS.y[0,:], np.transpose(Bundle_DNS.rs_xz),  cmap="RdBu_r")
+    #plt.title(r'$v\theta$ Prediction (DNS data)')
+    plt.colorbar(img, ax=axs6[0])
+    axs6[0].set_title(r'$\overline{uw}$ DNS')
+    axs6[0].set_aspect('equal')
+    plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+    manager6 = plt.get_current_fig_manager()      
+    # axs6[0,0].set_ylabel(r'$y$', fontsize=18)
+    # axs6[0,0].set_xlabel(r'$x$', fontsize=18)
+    
+    
+    
+    fig7, axs7 = plt.subplots(1, n_plots, figsize=(5,6))
+    img = axs7[0].contourf(Bundle_DNS.x[:,0],Bundle_DNS.y[0,:], np.transpose(Bundle_DNS.rs_yy),  cmap="RdBu_r")
+    #plt.title(r'$v\theta$ Prediction (DNS data)')
+    plt.colorbar(img, ax=axs7[0])
+    axs7[0].set_title(r'$\overline{vv}$ DNS')
+    axs7[0].set_aspect('equal')
+    plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+    manager7 = plt.get_current_fig_manager()      
+    # axs7[0,0].set_ylabel(r'$y$', fontsize=18)
+    # axs7[0,0].set_xlabel(r'$x$', fontsize=18)
+    
+    
+    fig8, axs8 = plt.subplots(1, n_plots, figsize=(5,6))
+    img = axs8[0].contourf(Bundle_DNS.x[:,0],Bundle_DNS.y[0,:], np.transpose(Bundle_DNS.rs_zz),  cmap="RdBu_r")
+    #plt.title(r'$v\theta$ Prediction (DNS data)')
+    plt.colorbar(img, ax=axs8[0])
+    axs8[0].set_title(r'$\overline{ww}$ DNS')
+    axs8[0].set_aspect('equal')
+    plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+    manager8 = plt.get_current_fig_manager()      
+    # axs8[0,0].set_ylabel(r'$y$', fontsize=18)
+    # axs8[0,0].set_xlabel(r'$x$', fontsize=18)
+    
+    
+    fig9, axs9 = plt.subplots(1, n_plots, figsize=(5,6))
+    img = axs9[0].contourf(Bundle_DNS.x[:,0],Bundle_DNS.y[0,:], np.transpose(Bundle_DNS.rs_xy),  cmap="RdBu_r")
+    #plt.title(r'$v\theta$ Prediction (DNS data)')
+    plt.colorbar(img, ax=axs9[0])
+    axs9[0].set_title(r'$\overline{uv}$ DNS')
+    axs9[0].set_aspect('equal')
+    plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+    manager9 = plt.get_current_fig_manager()  
+
+    
+    fig10, axs10 = plt.subplots(1, n_plots, figsize=(5,6))
+    img = axs10[0].contourf(Bundle_DNS.x[:,0],Bundle_DNS.y[0,:], np.transpose(Bundle_DNS.kt),  cmap="RdBu_r")
+    #plt.title(r'$v\theta$ Prediction (DNS data)')
+    plt.colorbar(img, ax=axs10[0])
+    axs10[0].set_title(r'$k_t$ DNS')
+    axs10[0].set_aspect('equal')
+    plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+    manager10 = plt.get_current_fig_manager()  
+
+    
+    fig11, axs11 = plt.subplots(1, n_plots, figsize=(5,6))
+    img = axs11[0].contourf(Bundle_DNS.x[:,0],Bundle_DNS.y[0,:], np.transpose(Bundle_DNS.epsilont),  cmap="RdBu_r")
+    #plt.title(r'$v\theta$ Prediction (DNS data)')
+    plt.colorbar(img, ax=axs11[0])
+    axs11[0].set_title(r'$\epsilon_t$ DNS')
+    axs11[0].set_aspect('equal')
+    plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+    manager11 = plt.get_current_fig_manager()  
+
+    
+    fig12, axs12 = plt.subplots(1, n_plots, figsize=(5,6))
+    img = axs12[0].contourf(Bundle_DNS.x[:,0],Bundle_DNS.y[0,:], np.transpose(Bundle_DNS.thf_x),  cmap="RdBu_r")
+    #plt.title(r'$v\theta$ Prediction (DNS data)')
+    plt.colorbar(img, ax=axs12[0])
+    axs12[0].set_title(r'$\epsilon_t$ DNS')
+    axs12[0].set_aspect('equal')
+    plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+    manager12 = plt.get_current_fig_manager()  
+
+    
+    fig13, axs13 = plt.subplots(1, n_plots, figsize=(5,6))
+    img = axs13[0].contourf(Bundle_DNS.x[:,0],Bundle_DNS.y[0,:], np.transpose(Bundle_DNS.thf_y),  cmap="RdBu_r")
+    #plt.title(r'$v\theta$ Prediction (DNS data)')
+    plt.colorbar(img, ax=axs13[0])
+    axs13[0].set_title(r'$\epsilon_t$ DNS')
+    axs13[0].set_aspect('equal')
+    plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+    manager13 = plt.get_current_fig_manager()      
+
+
+# axs8[0,0].set_ylabel(r'$y$', fontsize=18)
+# axs8[0,0].set_xlabel(r'$x$', fontsize=18)
+
+x_I = np.linspace(-0.533,0,100)
+y_I = 0.571*x_I -1.62
+gamma_I = np.linspace(0,0.611,100)
+
+x_II = np.linspace(-0.533,0,100)*0.0
+y_II = np.flip(np.linspace(-2.42,-1.62,100))
+
+x_III = np.flip(np.linspace(-0.4,0,100))
+y_III = np.flip(np.linspace(-2.42,-1.62,100))*0.0 -2.41
+
+gamma_II = np.linspace(0,0.62,100)+ gamma_I[-1]
+gamma_III = np.linspace(0,0.4,100)+ gamma_II[-1]
+
+triang = tri.Triangulation(Bundle_DNS.x.reshape([-1])*2.32, Bundle_DNS.y.reshape([-1])*2.32)
+interpolator = tri.LinearTriInterpolator(triang, Bundle_DNS.W.reshape([-1]))
+
+W_DNS_I = interpolator(x_I,y_I)
+W_DNS_II = interpolator(x_II,y_II)
+W_DNS_III = interpolator(x_III,y_III)
+
+triang = tri.Triangulation(Bundle_DNS.x.reshape([-1])*2.32, Bundle_DNS.y.reshape([-1])*2.32)
+interpolator = tri.LinearTriInterpolator(triang, Bundle_DNS.k.reshape([-1]))
+
+k_DNS_I = interpolator(x_I,y_I)
+k_DNS_II = interpolator(x_II,y_II)
+k_DNS_III = interpolator(x_III,y_III)
+
+triang = tri.Triangulation(Bundle_DNS.x.reshape([-1])*2.32, Bundle_DNS.y.reshape([-1])*2.32)
+interpolator = tri.LinearTriInterpolator(triang, Bundle_DNS.epsilon.reshape([-1]))
+
+epsilon_DNS_I = interpolator(x_I,y_I)
+epsilon_DNS_II = interpolator(x_II,y_II)
+epsilon_DNS_III = interpolator(x_III,y_III)
+
+
+triang = tri.Triangulation(Bundle_DNS.x.reshape([-1])*2.32, Bundle_DNS.y.reshape([-1])*2.32)
+interpolator = tri.LinearTriInterpolator(triang, Bundle_DNS.T.reshape([-1]))
+
+T_DNS_I = interpolator(x_I,y_I)
+T_DNS_II = interpolator(x_II,y_II)
+T_DNS_III = interpolator(x_III,y_III)
+
+
+triang = tri.Triangulation(Bundle_DNS.x.reshape([-1])*2.32, Bundle_DNS.y.reshape([-1])*2.32)
+interpolator = tri.LinearTriInterpolator(triang, Bundle_DNS.rs_xz.reshape([-1]))
+
+rs_xz_DNS_I = interpolator(x_I,y_I)
+rs_xz_DNS_II = interpolator(x_II,y_II)
+rs_xz_DNS_III = interpolator(x_III,y_III)
+
+triang = tri.Triangulation(Bundle_DNS.x.reshape([-1])*2.32, Bundle_DNS.y.reshape([-1])*2.32)
+interpolator = tri.LinearTriInterpolator(triang, Bundle_DNS.kt.reshape([-1]))
+
+kt_DNS_I = interpolator(x_I,y_I)
+kt_DNS_II = interpolator(x_II,y_II)
+kt_DNS_III = interpolator(x_III,y_III)
+
+triang = tri.Triangulation(Bundle_DNS.x.reshape([-1])*2.32, Bundle_DNS.y.reshape([-1])*2.32)
+interpolator = tri.LinearTriInterpolator(triang, Bundle_DNS.epsilont.reshape([-1]))
+
+epsilont_DNS_I = interpolator(x_I,y_I)
+epsilont_DNS_II = interpolator(x_II,y_II)
+epsilont_DNS_III = interpolator(x_III,y_III)
+
+interpolator = tri.LinearTriInterpolator(triang, Bundle_DNS.thf_x.reshape([-1]))
+
+thfx_DNS_I = interpolator(x_I,y_I)
+thfx_DNS_II = interpolator(x_II,y_II)
+thfx_DNS_III = interpolator(x_III,y_III)
+
+interpolator = tri.LinearTriInterpolator(triang, Bundle_DNS.thf_y.reshape([-1]))
+
+thfy_DNS_I = interpolator(x_I,y_I)
+thfy_DNS_II = interpolator(x_II,y_II)
+thfy_DNS_III = interpolator(x_III,y_III)
+
+interpolator = tri.LinearTriInterpolator(triang, Bundle_DNS.thf_z.reshape([-1]))
+
+thfz_DNS_I = interpolator(x_I,y_I)
+thfz_DNS_II = interpolator(x_II,y_II)
+thfz_DNS_III = interpolator(x_III,y_III)
+
+if bool_plots:
+    
+    plt.figure(788)
+    plt.plot(gamma_I,W_DNS_I, color='r', label='DNS') 
+    plt.plot(gamma_II,W_DNS_II, color='r')  
+    plt.plot(gamma_III,W_DNS_III, color='r') 
+    
+    plt.figure(789)
+    plt.plot(gamma_I,k_DNS_I, color='r', label='DNS') 
+    plt.plot(gamma_II,k_DNS_II, color='r')  
+    plt.plot(gamma_III,k_DNS_III, color='r')   
+    
+    plt.figure(790)
+    plt.plot(gamma_I,epsilon_DNS_I/550, color='r', label='DNS') 
+    plt.plot(gamma_II,epsilon_DNS_II/550, color='r')  
+    plt.plot(gamma_III,epsilon_DNS_III/550, color='r')   
+    
+    plt.figure(791)
+    plt.plot(gamma_I,T_DNS_I, color='r', label='DNS') 
+    plt.plot(gamma_II,T_DNS_II, color='r')  
+    plt.plot(gamma_III,T_DNS_III, color='r') 
+    
+    
+    plt.figure(792)
+    plt.plot(gamma_I,rs_xz_DNS_I, color='r', label='DNS') 
+    plt.plot(gamma_II,rs_xz_DNS_II, color='r')  
+    plt.plot(gamma_III,rs_xz_DNS_III, color='r') 
+    
+    plt.figure(793)
+    plt.plot(gamma_I,kt_DNS_I, color='r', label='DNS') 
+    plt.plot(gamma_II,kt_DNS_II, color='r')  
+    plt.plot(gamma_III,kt_DNS_III, color='r') 
+    
+    plt.figure(794)
+    plt.plot(gamma_I,epsilont_DNS_I, color='r', label='DNS') 
+    plt.plot(gamma_II,epsilont_DNS_II, color='r')  
+    plt.plot(gamma_III,epsilont_DNS_III, color='r')
+    
+    plt.figure(795)
+    plt.plot(gamma_I,thfx_DNS_I, color='r', label='DNS') 
+    plt.plot(gamma_II,thfx_DNS_II, color='r')  
+    plt.plot(gamma_III,thfx_DNS_III, color='r') 
+    
+    plt.figure(796)
+    plt.plot(gamma_I,thfy_DNS_I, color='r', label='DNS') 
+    plt.plot(gamma_II,thfy_DNS_II, color='r')  
+    plt.plot(gamma_III,thfy_DNS_III, color='r') 
+    
+    plt.figure(797)
+    plt.plot(gamma_I,thfz_DNS_I, color='r', label='DNS') 
+    plt.plot(gamma_II,thfz_DNS_II, color='r')  
+    plt.plot(gamma_III,thfz_DNS_III, color='r')
+
+for i_ in range(0,len(path_list)):
+    
+
+    k1 = 0#(i_+1)//2
+    k2 = i_+1#(i_+1)%2 
+    
+    
+    path = path_list[i_]
+    name_ = case_names[i_]
+
+    fileName=os.path.join(path, 'U_yNormal.raw')
+    
+    
+    with open(fileName, 'r') as my_file:
+        text = my_file.read()
+        text = text.replace("(", "")
+        text = text.replace(")", "")
+    
+    
+    with open(fileName, 'w') as my_file:
+        my_file.write(text)
+    
+    V_o = np.loadtxt(fileName, skiprows=2)
+    
+    
+    
+    fileName=os.path.join(path, 'T_yNormal.raw')
+    
+    
+    with open(fileName, 'r') as my_file:
+        text = my_file.read()
+        text = text.replace("(", "")
+        text = text.replace(")", "")
+    
+    
+    with open(fileName, 'w') as my_file:
+        my_file.write(text)
+    
+    T_o = np.loadtxt(fileName, skiprows=2)
+    
+    
+    
+    fileName=os.path.join(path, 'k_yNormal.raw')
+    
+    with open(fileName, 'r') as my_file:
+        text = my_file.read()
+        text = text.replace("(", "")
+        text = text.replace(")", "")
+    
+    
+    with open(fileName, 'w') as my_file:
+        my_file.write(text)
+    
+    
+    k_o = np.loadtxt(fileName, skiprows=2)
+    
+    
+    
+    fileName=os.path.join(path, 'epsilon_yNormal.raw')
+    
+    with open(fileName, 'r') as my_file:
+        text = my_file.read()
+        text = text.replace("(", "")
+        text = text.replace(")", "")
+    
+    
+    with open(fileName, 'w') as my_file:
+        my_file.write(text)
+    
+    
+    epsilon_o = np.loadtxt(fileName, skiprows=2)
+    
+    
+    x = V_o[:,0]
+    z = V_o[:,1]
+    y = V_o[:,2]
+
+    ngridx= 100
+    ngridy= 100
+    
+    xi = np.linspace(-1.4, 1.4, ngridx)
+    yi = np.linspace(-2.42, 2.42, ngridy)
+    
+    triang = tri.Triangulation(x, y)
+    interpolator = tri.LinearTriInterpolator(triang, V_o[:,4])
+    Xi, Yi = np.meshgrid(xi, yi)
+    V_ = interpolator(Xi, Yi)
+    
+    #Plot over curve
+
+    
+    V_I = interpolator(x_I, y_I)
+    V_II = interpolator(x_II, y_II)    
+    V_III = interpolator(x_III, y_III)    
+
+
+    
+    interpolator = tri.LinearTriInterpolator(triang, k_o[:,3])
+    k_ = interpolator(Xi, Yi)
+    
+    
+    k_I = interpolator(x_I, y_I)
+    k_II = interpolator(x_II, y_II)    
+    k_III = interpolator(x_III, y_III)  
+    
+    
+    interpolator = tri.LinearTriInterpolator(triang, epsilon_o[:,3])
+    epsilon_ = interpolator(Xi, Yi)
+    
+    
+    epsilon_I = interpolator(x_I, y_I)
+    epsilon_II = interpolator(x_II, y_II)    
+    epsilon_III = interpolator(x_III, y_III)  
+    
+    
+    interpolator = tri.LinearTriInterpolator(triang, T_o[:,3])
+    T_ = interpolator(Xi, Yi)
+    
+    T_I = interpolator(x_I, y_I)
+    T_II = interpolator(x_II, y_II)    
+    T_III = interpolator(x_III, y_III) 
+
+
+    T_bulk_x=np.trapz(np.nan_to_num(T_.data*V_.data), xi, axis=0)
+    T_bulk=np.trapz(T_bulk_x, yi, axis=-1)
+    
+
+    Area = 4.84*2.8-2*3.14
+    
+    T_bulk=T_bulk/Area/0.035
+    
+    u_tau = 550*1e-5/2.32
+    
+    T_ref = 17764.165
+    
+    deltaT = np.max(T_)-T_bulk
+    
+    Nu = 360000/47.076*2.32/deltaT
+    
+    print(Nu) 
+    
+
+
+    index1 = np.where( Xi**2 + Yi**2 < (1.0+0.001)**2 )
+    index2 = np.where( (Xi-1.4)**2 + (Yi-math.sqrt(3)*1.4)**2 < (1.+0.001)**2 )
+    index3 = np.where( (Xi+1.4)**2 + (Yi-math.sqrt(3)*1.4)**2 < (1+0.001)**2 )
+    index4 = np.where( (Xi-1.4)**2 + (Yi+math.sqrt(3)*1.4)**2 < (1+0.001)**2 )
+    index5 = np.where( (Xi+1.4)**2 + (Yi+math.sqrt(3)*1.4)**2 < (1+0.001)**2 )
+    
+    
+    V_[index1]=  float("Nan")
+    V_[index2]=  float("Nan")
+    V_[index3]=  float("Nan")
+    V_[index4]=  float("Nan")
+    V_[index5]=  float("Nan")
+    
+    k_[index1]=  float("Nan")
+    k_[index2]=  float("Nan")
+    k_[index3]=  float("Nan")
+    k_[index4]=  float("Nan")
+    k_[index5]=  float("Nan")
+    
+    epsilon_[index1]=  float("Nan")
+    epsilon_[index2]=  float("Nan")
+    epsilon_[index3]=  float("Nan")
+    epsilon_[index4]=  float("Nan")
+    epsilon_[index5]=  float("Nan")
+    
+    T_[index1]=  float("Nan")
+    T_[index2]=  float("Nan")
+    T_[index3]=  float("Nan")
+    T_[index4]=  float("Nan")
+    T_[index5]=  float("Nan")
+    
+
+    
+
+    
+
+    
+    Xi = Xi/2.32
+    Yi = Yi/2.32
+    
+    V_=V_/u_tau
+    
+    rho = 1000
+    Cp = 145.75
+    
+    k_=k_/u_tau**2.
+    
+    epsilon_=epsilon_/u_tau**4.*1e-5
+    
+    Bundle_DNS.nut = 0.09*Bundle_DNS.k**2./Bundle_DNS.epsilon*550
+    
+    if bool_plots:
+    
+        plt.figure(788,figsize=(xl,yl))
+        plt.plot(gamma_I,V_I/u_tau, color=colors[i_],linestyle=linestyle_vec[i_], label=name_)
+        plt.plot(gamma_II,V_II/u_tau, color=colors[i_],linestyle=linestyle_vec[i_])
+        plt.plot(gamma_III,V_III/u_tau, color=colors[i_],linestyle=linestyle_vec[i_])
+        plt.ylabel(r'$U$')
+        plt.xlabel(r'$\gamma$')
+        plt.savefig('Bundle_pictures/U_plot.png',bbox_inches='tight', dpi=400)
+        
+        plt.legend()
+        
+        
+        plt.figure(789,figsize=(xl,yl))
+        plt.plot(gamma_I,k_I/u_tau**2., color=colors[i_],linestyle=linestyle_vec[i_], label=name_)
+        plt.plot(gamma_II,k_II/u_tau**2., color=colors[i_],linestyle=linestyle_vec[i_])
+        plt.plot(gamma_III,k_III/u_tau**2., color=colors[i_],linestyle=linestyle_vec[i_])
+        plt.ylabel(r'$k$')
+        plt.xlabel(r'$\gamma$')
+        plt.legend()
+        plt.savefig('Bundle_pictures/k_plot.png',bbox_inches='tight', dpi=400)
+        
+        
+        plt.figure(790,figsize=(xl,yl))
+        plt.plot(gamma_I,epsilon_I/u_tau**2., color=colors[i_],linestyle=linestyle_vec[i_], label=name_)
+        plt.plot(gamma_II,epsilon_II/u_tau**2., color=colors[i_],linestyle=linestyle_vec[i_])
+        plt.plot(gamma_III,epsilon_III/u_tau**2., color=colors[i_],linestyle=linestyle_vec[i_])
+        plt.ylabel(r'$\epsilon$')
+        plt.xlabel(r'$\gamma$')
+        plt.legend()
+        plt.savefig('Bundle_pictures/epsilon_plot.png',bbox_inches='tight', dpi=400)
+        
+        plt.figure(791,figsize=(xl,yl))
+        plt.plot(gamma_I,(T_I-T_bulk)/T_ref, color=colors[i_],linestyle=linestyle_vec[i_], label=name_)
+        plt.plot(gamma_II,(T_II-T_bulk)/T_ref, color=colors[i_],linestyle=linestyle_vec[i_])
+        plt.plot(gamma_III,(T_III-T_bulk)/T_ref, color=colors[i_],linestyle=linestyle_vec[i_])
+        plt.ylabel(r'$T$')
+        plt.xlabel(r'$\gamma$')
+        plt.legend()
+        plt.savefig('Bundle_pictures/T_plot.pdf',bbox_inches='tight', dpi=400)
+    
+    if bool_contour:
+
+        img  = axs1[k2].contourf(Xi,Yi, V_,  cmap="RdBu_r")
+        plt.colorbar(img, ax=axs1[k2])
+        #plt.title(r'$v\theta$ Prediction (DNS data)')
+        axs1[k2].set_title(r'$U$ '+ name_)
+        axs1[k2].set_aspect('equal')
+        plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+        plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+        manager1.window.showMaximized()
+        fig1.set_size_inches(32, 18)
+        fig1.savefig('Bundle_pictures/V.png',bbox_inches='tight', dpi=400)
+        #axs1[k2].subplots_adjust(left=left, bottom=bottom, right=right, top=top, wspace=wspace, hspace=hspace)
+        # axs1[k1,k2].set_ylabel(r'$y$', fontsize=18)
+        # axs1[k1,k2].set_xlabel(r'$x$', fontsize=18)
+        
+        
+        img = axs2[k2].contourf(Xi,Yi, k_,  cmap="RdBu_r")
+        #plt.title(r'$v\theta$ Prediction (DNS data)')
+        plt.colorbar(img, ax=axs2[k2])
+        axs2[k2].set_title(r'$k$ '+ name_)
+        axs2[k2].set_aspect('equal')
+        plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+        manager2.window.showMaximized()
+        fig2.set_size_inches(32, 18)
+        fig2.savefig('Bundle_pictures/k.png',bbox_inches='tight', dpi=400)
+        # mng = plt.get_current_fig_manager()
+        # mng.full_screen_toggle()
+        # img.show()
+        # img.savefig('k.png')       
+        # axs2[k1,k2].set_ylabel(r'$y$', fontsize=18)
+        # axs2[k1,k2].set_xlabel(r'$x$', fontsize=18)
+        
+        
+        img = axs3[k2].contourf(Xi,Yi, epsilon_,  cmap="RdBu_r")
+        #plt.title(r'$v\theta$ Prediction (DNS data)')
+        plt.colorbar(img, ax=axs3[k2])
+        axs3[k2].set_title(r'$\epsilon$ '+ name_)
+        axs3[k2].set_aspect('equal')
+        plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+        manager3.window.showMaximized()
+        fig3.set_size_inches(32, 18)
+        fig3.savefig('Bundle_pictures/epsilon.png',bbox_inches='tight', dpi=400)
+        # mng = plt.get_current_fig_manager()
+        # mng.full_screen_toggle()
+        # img.show()
+        # img.savefig('epsilon.png')       
+        # axs3[k1,k2].set_ylabel(r'$y$', fontsize=18)
+        # axs3[k1,k2].set_xlabel(r'$x$', fontsize=18)
+    
+        
+        print('T_bulk', T_bulk)
+        
+    
+        img = axs4[k2].contourf(Xi,Yi, (T_-T_bulk)/T_ref,  cmap="RdBu_r")
+        #plt.title(r'$v\theta$ Prediction (DNS data)')
+        plt.colorbar(img, ax=axs4[k2])
+        axs4[k2].set_title(r'$T$ '+ name_)
+        axs4[k2].set_aspect('equal')
+        plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+        manager4.window.showMaximized()
+        fig4.set_size_inches(32, 18)
+        fig4.savefig('Bundle_pictures/T.png',bbox_inches='tight', dpi=400)
+        # mng = plt.get_current_fig_manager()
+        # mng.full_screen_toggle()
+        # img.show()
+        # img.savefig('T.png')       
+        # axs4[k1,k2].set_ylabel(r'$y$', fontsize=18)
+        # axs4[k1,k2].set_xlabel(r'$x$', fontsize=18)
+        
+        
+        # plt.figure()
+        # plt.contourf(Xi,Yi, (T_), levels=20, cmap="RdBu_r")
+        # #plt.title(r'$v\theta$ Prediction (DNS data)')
+        # plt.colorbar()
+        # plt.title(r'$T$ '+ name_)
+        # plt.ylabel(r'$y$', fontsize=18)
+        # plt.xlabel(r'$x$', fontsize=18)
+    
+
+        
+    fileName=os.path.join(path, 'R_yNormal.raw')
+    
+    with open(fileName, 'r') as my_file:
+        text = my_file.read()
+        text = text.replace("(", "")
+        text = text.replace(")", "")
+    
+    
+    with open(fileName, 'w') as my_file:
+        my_file.write(text)
+    
+    
+    R_o = np.loadtxt(fileName, skiprows=2)    
+    
+    xi = np.linspace(-1.4, 1.4, ngridx)
+    yi = np.linspace(-2.42, 2.42, ngridy)
+
+    Xi, Yi = np.meshgrid(xi, yi)
+
+    rs_xx = R_o[:,3]
+    rs_xy = R_o[:,4]
+    rs_xz = R_o[:,5]
+    rs_yy = R_o[:,6]
+    rs_yz = R_o[:,7]
+    rs_zz = R_o[:,8]
+    
+    
+    x = R_o[:,0]
+    z = R_o[:,1]
+    y = R_o[:,2]
+    
+    triang = tri.Triangulation(x, y)
+    interpolator = tri.LinearTriInterpolator(triang, rs_xx)
+    rs_xx_ = interpolator(Xi, Yi)
+    
+    rs_xx_I = interpolator(x_I, y_I)
+    rs_xx_II = interpolator(x_II, y_II)    
+    rs_xx_III = interpolator(x_III, y_III) 
+    
+    triang = tri.Triangulation(x, y)
+    interpolator = tri.LinearTriInterpolator(triang, rs_xy)
+    rs_xy_ = interpolator(Xi, Yi)
+    
+    rs_xy_I = interpolator(x_I, y_I)
+    rs_xy_II = interpolator(x_II, y_II)    
+    rs_xy_III = interpolator(x_III, y_III) 
+    
+
+    triang = tri.Triangulation(x, y)
+    interpolator = tri.LinearTriInterpolator(triang, rs_xz)
+    rs_xz_ = interpolator(Xi, Yi)
+    
+    rs_xz_I = interpolator(x_I, y_I)
+    rs_xz_II = interpolator(x_II, y_II)    
+    rs_xz_III = interpolator(x_III, y_III) 
+    
+    triang = tri.Triangulation(x, y)
+    interpolator = tri.LinearTriInterpolator(triang, rs_yy)
+    rs_yy_ = interpolator(Xi, Yi)
+    
+    rs_yy_I = interpolator(x_I, y_I)
+    rs_yy_II = interpolator(x_II, y_II)    
+    rs_yy_III = interpolator(x_III, y_III) 
+    
+    triang = tri.Triangulation(x, y)
+    interpolator = tri.LinearTriInterpolator(triang, rs_yz)
+    rs_yz_ = interpolator(Xi, Yi)
+    
+    rs_yz_I = interpolator(x_I, y_I)
+    rs_yz_II = interpolator(x_II, y_II)    
+    rs_yz_III = interpolator(x_III, y_III)
+    
+    triang = tri.Triangulation(x, y)
+    interpolator = tri.LinearTriInterpolator(triang, rs_zz)
+    rs_zz_ = interpolator(Xi, Yi)
+    
+    rs_zz_I = interpolator(x_I, y_I)
+    rs_zz_II = interpolator(x_II, y_II)    
+    rs_zz_III = interpolator(x_III, y_III)
+    
+    Xi = Xi/2.32
+    Yi = Yi/2.32
+    
+    rs_xx_=rs_xx_/u_tau**2.
+    rs_xy_=rs_xy_/u_tau**2.
+    rs_yy_=rs_yy_/u_tau**2.
+    rs_zz_=rs_zz_/u_tau**2.   
+    rs_xz_=rs_xz_/u_tau**2. 
+    
+    
+    rs_xx_[index1]=  float("Nan")
+    rs_xx_[index2]=  float("Nan")
+    rs_xx_[index3]=  float("Nan")
+    rs_xx_[index4]=  float("Nan")
+    rs_xx_[index5]=  float("Nan")
+    
+    rs_xy_[index1]=  float("Nan")
+    rs_xy_[index2]=  float("Nan")
+    rs_xy_[index3]=  float("Nan")
+    rs_xy_[index4]=  float("Nan")
+    rs_xy_[index5]=  float("Nan")
+    
+    rs_yy_[index1]=  float("Nan")
+    rs_yy_[index2]=  float("Nan")
+    rs_yy_[index3]=  float("Nan")
+    rs_yy_[index4]=  float("Nan")
+    rs_yy_[index5]=  float("Nan")
+    
+    rs_zz_[index1]=  float("Nan")
+    rs_zz_[index2]=  float("Nan")
+    rs_zz_[index3]=  float("Nan")
+    rs_zz_[index4]=  float("Nan")
+    rs_zz_[index5]=  float("Nan")
+    
+    rs_xz_[index1]=  float("Nan")
+    rs_xz_[index2]=  float("Nan")
+    rs_xz_[index3]=  float("Nan")
+    rs_xz_[index4]=  float("Nan")
+    rs_xz_[index5]=  float("Nan")
+    
+    
+    if bool_contour:
+
+        img = axs5[k2].contourf(Xi,Yi, rs_xx_, cmap="RdBu_r")
+        #plt.title(r'$v\theta$ Prediction (DNS data)')
+        plt.colorbar(img, ax=axs5[k2])
+        axs5[k2].set_title(r'$\overline{uu}$ '+ name_)
+        axs5[k2].set_aspect('equal')
+        plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+        manager5.window.showMaximized()
+        fig5.set_size_inches(32, 18)
+        fig5.savefig('Bundle_pictures/rs_xx.png',bbox_inches='tight', dpi=400)
+        # mng = plt.get_current_fig_manager()
+        # mng.full_screen_toggle()
+        # img.show()
+        # img.savefig('rs_xx.png')   
+        # axs5[k1,k2].set_ylabel(r'$y$', fontsize=18)
+        # axs5[k1,k2].set_xlabel(r'$x$', fontsize=18)
+        
+    
+        img = axs6[k2].contourf(Xi,Yi, rs_xy_,  cmap="RdBu_r")
+        #plt.title(r'$v\theta$ Prediction (DNS data)')
+        plt.colorbar(img, ax=axs6[k2])
+        axs6[k2].set_title(r'$\overline{uw}$ '+ name_)
+        axs6[k2].set_aspect('equal')
+        plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+        manager6.window.showMaximized()
+        fig6.set_size_inches(32, 18)
+        fig6.savefig('Bundle_pictures/rs_xy.png',bbox_inches='tight', dpi=400)
+        # mng = plt.get_current_fig_manager()
+        # mng.full_screen_toggle()
+        # img.show()
+        # img.savefig('rs_xy.png')      
+        # axs6[k1,k2].set_ylabel(r'$y$', fontsize=18)
+        # axs6[k1,k2].set_xlabel(r'$x$', fontsize=18)
+        
+    
+        img = axs8[k2].contourf(Xi,Yi, rs_yy_,  cmap="RdBu_r")
+        #plt.title(r'$v\theta$ Prediction (DNS data)')
+        plt.colorbar(img, ax=axs8[k2])
+        axs8[k2].set_title(r'$\overline{ww}$ '+ name_)
+        axs8[k2].set_aspect('equal')
+        plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+        manager8.window.showMaximized()
+        fig8.set_size_inches(32, 18)
+        fig8.savefig('Bundle_pictures/rs_yy.png',bbox_inches='tight', dpi=400)
+        # mng = plt.get_current_fig_manager()
+        # mng.full_screen_toggle()
+        # img.show()
+        # img.savefig('rs_yy.png')       
+        # axs7[k1,k2].set_ylabel(r'$y$', fontsize=18)
+        # axs7[k1,k2].set_xlabel(r'$x$', fontsize=18)
+        
+    
+        img = axs7[k2].contourf(Xi,Yi, rs_zz_,  cmap="RdBu_r")
+        #plt.title(r'$v\theta$ Prediction (DNS data)')
+        plt.colorbar(img, ax=axs7[k2])
+        axs7[k2].set_title(r'$\overline{vv}$ '+ name_)
+        axs7[k2].set_aspect('equal')
+        plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+        manager7.window.showMaximized()
+        fig7.set_size_inches(32, 18)
+        fig7.savefig('Bundle_pictures/rs_zz.png',bbox_inches='tight', dpi=400)
+        # mng = plt.get_current_fig_manager()
+        # mng.full_screen_toggle()
+        # img.show()
+        # img.savefig('rs_zz.png')       
+        # axs8[k1,k2].set_ylabel(r'$y$', fontsize=18)
+        # axs8[k1,k2].set_xlabel(r'$x$', fontsize=18)
+        
+        
+        img = axs9[k2].contourf(Xi,Yi, rs_xz_,  cmap="RdBu_r")
+        #plt.title(r'$v\theta$ Prediction (DNS data)')
+        plt.colorbar(img, ax=axs9[k2])
+        axs9[k2].set_title(r'$\overline{uv}$ '+ name_)
+        axs9[k2].set_aspect('equal')
+        plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+        manager9.window.showMaximized()
+        fig9.set_size_inches(32, 18)
+        fig9.savefig('Bundle_pictures/rs_xz.png',bbox_inches='tight', dpi=400)
+        # mng = plt.get_current_fig_manager()
+        # mng.full_screen_toggle()
+        # axs9.show()
+        # axs9.savefig('rs_xz.png')       
+        # axs8[k1,k2].set_ylabel(r'$y$', fontsize=18)
+        # axs8[k1,k2].set_xlabel(r'$x$', fontsize=18)
+    
+    
+    if bool_plots:
+    
+        plt.figure(792,figsize=(xl,yl))
+        plt.plot(gamma_I,rs_xy_I/u_tau**2., color=colors[i_],linestyle=linestyle_vec[i_], label=name_)
+        plt.plot(gamma_II,rs_xy_II/u_tau**2., color=colors[i_],linestyle=linestyle_vec[i_])
+        plt.plot(gamma_III,rs_xy_III/u_tau**2., color=colors[i_],linestyle=linestyle_vec[i_])
+        plt.ylabel(r'$\overline{uv}$')
+        plt.ylabel(r'$\gamma$')
+        plt.legend()
+        plt.savefig('Bundle_pictures/rs_xy_plot.png',bbox_inches='tight', dpi=400)
+    
+    
+    if thermal_treatment[i_]==  'Manservisi':
+        
+        fileName=os.path.join(path, 'kt_yNormal.raw')
+        kt_o = np.loadtxt(fileName, skiprows=2)  
+        x = kt_o[:,0]
+        z = kt_o[:,1]
+        y = kt_o[:,2]
+        kt = kt_o[:,3]
+        
+        fileName=os.path.join(path, 'epsilont_yNormal.raw')
+        epsilont_o = np.loadtxt(fileName, skiprows=2)  
+        x = epsilont_o[:,0]
+        z = epsilont_o[:,1]
+        y = epsilont_o[:,2]
+        epsilont = epsilont_o[:,3]
+        
+        fileName=os.path.join(path, 'Q_yNormal.raw')
+        q_o = np.loadtxt(fileName, skiprows=2)  
+        x =q_o[:,0]
+        z = q_o[:,1]
+        y = q_o[:,2]
+        qx = q_o[:,3]/rho/Cp
+        qy = q_o[:,4]/rho/Cp
+        qz = q_o[:,5]/rho/Cp       
+        
+        triang = tri.Triangulation(x, y)
+        
+        xi = np.linspace(-1.4, 1.4, ngridx)
+        yi = np.linspace(-2.42, 2.42, ngridy)
+
+        Xi, Yi = np.meshgrid(xi, yi)
+        
+        interpolator = tri.LinearTriInterpolator(triang, kt)
+        kt_ = interpolator(Xi, Yi)
+    
+        kt_I = interpolator(x_I, y_I)
+        kt_II = interpolator(x_II, y_II)    
+        kt_III = interpolator(x_III, y_III)
+        
+        interpolator = tri.LinearTriInterpolator(triang, epsilont)
+        epsilont_ = interpolator(Xi, Yi)
+    
+        epsilont_I = interpolator(x_I, y_I)
+        epsilont_II = interpolator(x_II, y_II)    
+        epsilont_III = interpolator(x_III, y_III)
+        
+        interpolator = tri.LinearTriInterpolator(triang, qx)
+        qx_ = interpolator(Xi, Yi)
+    
+        qx_I = interpolator(x_I, y_I)
+        qx_II = interpolator(x_II, y_II)    
+        qx_III = interpolator(x_III, y_III)
+
+        interpolator = tri.LinearTriInterpolator(triang, qy)
+        qy_ = interpolator(Xi, Yi)
+    
+        qy_I = interpolator(x_I, y_I)
+        qy_II = interpolator(x_II, y_II)    
+        qy_III = interpolator(x_III, y_III)
+
+        interpolator = tri.LinearTriInterpolator(triang, qz)
+        qz_ = interpolator(Xi, Yi)
+    
+        qz_I = interpolator(x_I, y_I)
+        qz_II = interpolator(x_II, y_II)    
+        qz_III = interpolator(x_III, y_III)
+
+        
+        Xi = Xi/2.32
+        Yi = Yi/2.32
+        
+        kt_=kt_/T_ref**2.
+        epsilont_=epsilont_/T_ref**2./u_tau**2.*1e-5
+        
+        kt_[index1]=  float("Nan")
+        kt_[index2]=  float("Nan")
+        kt_[index3]=  float("Nan")
+        kt_[index4]=  float("Nan")
+        kt_[index5]=  float("Nan")
+        
+        epsilont_[index1]=  float("Nan")
+        epsilont_[index2]=  float("Nan")
+        epsilont_[index3]=  float("Nan")
+        epsilont_[index4]=  float("Nan")
+        epsilont_[index5]=  float("Nan")
+        
+        qx_[index1]=  float("Nan")
+        qx_[index2]=  float("Nan")
+        qx_[index3]=  float("Nan")
+        qx_[index4]=  float("Nan")
+        qx_[index5]=  float("Nan")
+        
+        
+        qy_[index1]=  float("Nan")
+        qy_[index2]=  float("Nan")
+        qy_[index3]=  float("Nan")
+        qy_[index4]=  float("Nan")
+        qy_[index5]=  float("Nan")
+        
+        qz_[index1]=  float("Nan")
+        qz_[index2]=  float("Nan")
+        qz_[index3]=  float("Nan")
+        qz_[index4]=  float("Nan")
+        qz_[index5]=  float("Nan")
+
+        if bool_plots:
+        
+            plt.figure(793,figsize=(xl,yl))
+            plt.plot(gamma_I,kt_I/T_ref**2., color=colors[i_],linestyle=linestyle_vec[i_], label=name_)
+            plt.plot(gamma_II,kt_II/T_ref**2., color=colors[i_],linestyle=linestyle_vec[i_])
+            plt.plot(gamma_III,kt_III/T_ref**2., color=colors[i_],linestyle=linestyle_vec[i_])
+            plt.ylabel(r'$k_t$')
+            plt.xlabel(r'$\gamma$')
+            plt.legend()
+            plt.savefig('Bundle_pictures/kt_plot.pdf',bbox_inches='tight', dpi=400)
+            plt.tight_layout()
+            
+            
+            plt.figure(794,figsize=(xl,yl))
+            plt.plot(gamma_I,epsilont_I/T_ref**2./u_tau**2.*1e-5, color=colors[i_],linestyle=linestyle_vec[i_], label=name_)
+            plt.plot(gamma_II,epsilont_II/T_ref**2./u_tau**2.*1e-5, color=colors[i_],linestyle=linestyle_vec[i_])
+            plt.plot(gamma_III,epsilont_III/T_ref**2./u_tau**2.*1e-5, color=colors[i_],linestyle=linestyle_vec[i_])
+            plt.ylabel(r'$\epsilon_t$')
+            plt.xlabel(r'$\gamma$')
+            plt.legend()
+            plt.savefig('Bundle_pictures/epsilont_plot.pdf',bbox_inches='tight', dpi=400)
+            plt.tight_layout()
+            
+            plt.figure(795,figsize=(xl,yl))
+            plt.plot(gamma_I,qx_I/T_ref/u_tau, color=colors[i_],linestyle=linestyle_vec[i_], label=name_)
+            plt.plot(gamma_II,qx_II/T_ref/u_tau, color=colors[i_],linestyle=linestyle_vec[i_])
+            plt.plot(gamma_III,qx_III/T_ref/u_tau, color=colors[i_],linestyle=linestyle_vec[i_])
+            plt.ylabel(r'$\overline{u \theta}$')
+            plt.xlabel(r'$\gamma$')
+            plt.legend()
+            plt.savefig('Bundle_pictures/qx_plot.pdf',bbox_inches='tight', dpi=400)
+            plt.tight_layout()
+            
+            plt.figure(796,figsize=(xl,yl))
+            plt.plot(gamma_I,qz_I/T_ref/u_tau, color=colors[i_],linestyle=linestyle_vec[i_], label=name_)
+            plt.plot(gamma_II,qz_II/T_ref/u_tau, color=colors[i_],linestyle=linestyle_vec[i_])
+            plt.plot(gamma_III,qz_III/T_ref/u_tau, color=colors[i_],linestyle=linestyle_vec[i_])
+            plt.ylabel(r'$\overline{v \theta}$')
+            plt.xlabel(r'$\gamma$')
+            plt.legend()
+            plt.savefig('Bundle_pictures/qz_plot.pdf',bbox_inches='tight', dpi=400)
+            
+            plt.figure(797,figsize=(xl,yl))
+            plt.plot(gamma_I,qy_I/T_ref/u_tau, color=colors[i_],linestyle=linestyle_vec[i_], label=name_)
+            plt.plot(gamma_II,qy_II/T_ref/u_tau, color=colors[i_],linestyle=linestyle_vec[i_])
+            plt.plot(gamma_III,qy_III/T_ref/u_tau, color=colors[i_],linestyle=linestyle_vec[i_])
+            plt.ylabel(r'$\overline{w \theta}$')
+            plt.xlabel(r'$\gamma$')
+            plt.legend()
+            plt.savefig('Bundle_pictures/qy_plot.pdf',bbox_inches='tight', dpi=400)
+
+
+        if bool_contour:
+        
+            img = axs10[k2].contourf(Xi,Yi, kt_,  cmap="RdBu_r")
+            #plt.title(r'$v\theta$ Prediction (DNS data)')
+            plt.colorbar(img, ax=axs10[k2])
+            axs10[k2].set_title(r'$k_t$ '+ name_)
+            axs10[k2].set_aspect('equal')
+            plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+            manager10.window.showMaximized()
+            fig10.set_size_inches(32, 18)
+            fig10.savefig('Bundle_pictures/kt.png',bbox_inches='tight', dpi=400)
+            # mng = plt.get_current_fig_manager()
+            # mng.full_screen_toggle()
+            # img.show()
+            # img.savefig('kt.png')   
+    
+            img = axs11[k2].contourf(Xi,Yi, epsilont_,  cmap="RdBu_r")
+            #plt.title(r'$v\theta$ Prediction (DNS data)')
+            plt.colorbar(img, ax=axs11[k2])
+            axs11[k2].set_title(r'$k_t$ '+ name_)
+            axs11[k2].set_aspect('equal')
+            plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+            manager11.window.showMaximized()
+            fig11.set_size_inches(32, 18)
+            fig11.savefig('Bundle_pictures/kt.png',bbox_inches='tight', dpi=400)
+            # mng = plt.get_current_fig_manager()
+            # mng.full_screen_toggle()
+            # img.show()
+            # img.savefig('epsilont.png')   
+        
+
+            img = axs12[k2].contourf(Xi,Yi, qx_/T_ref/u_tau,  cmap="RdBu_r")
+            #plt.title(r'$v\theta$ Prediction (DNS data)')
+            plt.colorbar(img, ax=axs12[k2])
+            axs12[k2].set_title(r'$k_t$ '+ name_)
+            axs12[k2].set_aspect('equal')
+            plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+            manager12.window.showMaximized()
+            fig12.set_size_inches(32, 18)
+            fig12.savefig('Bundle_pictures/kt.png',bbox_inches='tight', dpi=400)
+            # mng = plt.get_current_fig_manager()
+            # mng.full_screen_toggle()
+            # img.show()
+            # img.savefig('qx.png')   
+        
+            img = axs13[k2].contourf(Xi,Yi, qz_/T_ref/u_tau,  cmap="RdBu_r")
+            #plt.title(r'$v\theta$ Prediction (DNS data)')
+            plt.colorbar(img, ax=axs13[k2])
+            axs13[k2].set_title(r'$k_t$ '+ name_)
+            axs13[k2].set_aspect('equal')
+            plt.subplots_adjust(left=left, bottom=None, right=right, top=None, wspace=wspace, hspace=None)
+            manager13.window.showMaximized()
+            fig13.set_size_inches(32, 18)
+            fig13.savefig('Bundle_pictures/kt.png',bbox_inches='tight', dpi=400)
+            # mng = plt.get_current_fig_manager()
+            # mng.full_screen_toggle()
+            # img.show()
+            # img.savefig('qz.png')         

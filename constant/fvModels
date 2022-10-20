@@ -1,0 +1,90 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  9
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+        version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant/heater";
+    object      fvModels;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+energySource
+{
+
+        type            coded;
+        selectionMode   all;
+        field           h;
+
+        codeInclude
+        #{
+
+        #};
+
+        codeCorrect
+        #{
+            Pout<< "**codeCorrect**" << endl;
+        #};
+
+        codeAddRhoSup
+        #{
+
+
+          const Time& time = mesh().time();
+
+	  const scalarField& V = mesh().V();
+	  const vectorField& C = mesh().C();
+          const volVectorField& U = mesh().lookupObject<volVectorField>("U");
+
+
+	   dimensionedScalar qw_ ("qw_", dimensionSet(1, 0, -3, 0, 0, 0 ,0), scalar(360000)); // //Heat flux imposed at the walls [W/m^2]
+	   dimensionedScalar Ubulk_ ("Ubulk_", dimensionSet(0, 1, -1, 0, 0, 0 ,0), scalar(0.0356)); // Bulk velocity [m/s]
+           dimensionedScalar area_ ("area_", dimensionSet(0, 1, 0, 0, 0, 0 ,0), scalar(7.272)); //Size of the channel [m]
+           dimensionedScalar omega_ ("omega_", dimensionSet(0, 1, 0, 0, 0, 0 ,0), scalar(12.56)); //Size of the channel [m]
+
+
+           volScalarField Uy_ = U.component(vector::Y);
+
+           scalarField& hSource = eqn.source();
+
+	   Info << "The source at iteration 1" << endl;
+
+	  // hSource += Uy_*qw_*omega_.value()/area_.value()/Ubulk_.value()*V;
+
+
+
+          forAll(Uy_, i)
+	{
+	    hSource[i] += Uy_[i]*qw_.value()*omega_.value()/area_.value()/Ubulk_.value()*V[i];
+
+	 
+	}     
+
+
+        #};
+
+        codeSetValue
+        #{
+
+            Pout<< "**codeSetValue**" << endl;
+        #};
+
+        code
+        #{
+            $codeInclude
+            $codeCorrect
+            $codeAddSup
+            $codeSetValue
+        #};
+
+//        sourceTimeCoeffs
+ //       {
+  //          $scalarCodedSourceCoeffs;
+   //     }
+    }
+// ************************************************************************* //

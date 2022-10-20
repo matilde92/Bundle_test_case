@@ -1,0 +1,137 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  8
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      createPatchDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+pointSync   false;
+
+patches
+(
+    {
+        name    cylinderWalls;
+        patchInfo
+        {
+            type    wall;
+        }
+        constructFrom patches;
+        patches     (cylinder_patch0 cylinder1_patch0 cylinder2_patch0 cylinder3_patch0 cylinder4_patch0);
+    }
+
+    {
+        name    sidey_plus;
+
+        patchInfo
+        {
+            type    cyclicAMI;
+	    neighbourPatch sidey_minus;
+        transform       translational;
+	 separationVector ( 0 0 4.84);
+        matchTolerance  0.0001;
+        }
+        constructFrom patches;
+        patches (side2);
+    }
+
+
+    {
+        name    sidex_plus;
+
+        patchInfo
+        {
+            type    cyclicAMI;
+	    neighbourPatch sidex_minus;
+        transform       translational;
+	 separationVector ( -2.8 0 0);
+        matchTolerance  0.0001;
+        }
+        constructFrom patches;
+        patches (side3);
+    }
+
+
+    {
+        name    sidey_minus;
+
+        patchInfo
+        {
+            type    cyclicAMI;
+	    neighbourPatch sidey_plus;
+        transform       translational;
+	separationVector (0  0 -4.84);
+        matchTolerance  0.0001;
+
+        }
+        constructFrom patches;
+        patches (side1);
+    }
+
+
+    {
+        name    sidex_minus;
+
+        patchInfo
+        {
+            type    cyclicAMI;
+	    neighbourPatch sidex_plus;
+        transform       translational;
+	separationVector (2.8 0 0);
+        matchTolerance  0.0001;
+
+        }
+        constructFrom patches;
+        patches (side4);
+    }
+
+
+{
+
+        name    front;
+
+        patchInfo
+        {
+            type    cyclicAMI;
+	    neighbourPatch back;
+	transform translational;
+	separationVector (0 -0.4 0);
+        matchTolerance  0.0001;
+
+        }
+        constructFrom patches;
+        patches (top);
+    }
+
+
+{
+
+        name    back;
+
+        patchInfo
+        {
+            type    cyclicAMI;
+	    neighbourPatch front;
+	transform translational;
+	separationVector (0 0.4 0);
+        matchTolerance  0.0001;
+
+        }
+        constructFrom patches;
+        patches (bottom);
+    }
+
+
+
+
+);
+
+// ************************************************************************* //
